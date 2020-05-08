@@ -3,9 +3,11 @@ package com.alibaba.blink.customersink;
 import com.alibaba.blink.monitor.LogProducerProvider;
 import com.alibaba.blink.monitor.MetricMessage;
 import com.alibaba.blink.streaming.connector.custom.api.CustomSinkBase;
+import com.alibaba.blink.streaming.connectors.common.MetricUtils;
 import com.aliyun.openservices.aliyun.log.producer.LogProducer;
 import com.aliyun.openservices.aliyun.log.producer.errors.ProducerException;
 import com.aliyun.openservices.log.common.LogItem;
+import org.apache.flink.metrics.Meter;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.StringUtils;
 import org.slf4j.Logger;
@@ -44,18 +46,16 @@ public class PrintCustomSink extends CustomSinkBase {
 
     private int updateSeconds;
 
-    private int columnSize;
+    private Meter outTps;
 
-    private int mcIndex;
-
-    private int vcIndex;
+    private String tpsMetricName;
 
     private AtomicLong numFailed = new AtomicLong(0);
 
     @Override
     public void open(int i, int i1) throws IOException {
-        project = userParamsMap.get("your_project_name");
-        logStore = userParamsMap.get("your_logStore_value");
+        project = userParamsMap.get("__inner__projectname__");
+        logStore = userParamsMap.get("__inner__jobname__");
         endPoint = userParamsMap.get("your_endPoint_value");
         propertyFilePath = userParamsMap.get("your_propertyFilePath_value");
         accessId = userParamsMap.get("your_accessId_value");
@@ -63,9 +63,6 @@ public class PrintCustomSink extends CustomSinkBase {
         String maxRetryTimeStr = userParamsMap.get("your_maxRetryTime_value");
         String flushIntervalStr = userParamsMap.get("your_flushInterval_value");
         String updateSecondsStr = userParamsMap.get("your_updateSeconds_value");
-
-        String metricColumn = userParamsMap.get("your_metricColumn_value");
-        String valueColumn = userParamsMap.get("your_valueColumn_value");
 
         if(StringUtils.isNullOrWhitespaceOnly(project)){
             throw new IllegalArgumentException("sls project cannot be null");
@@ -77,14 +74,6 @@ public class PrintCustomSink extends CustomSinkBase {
 
         if(StringUtils.isNullOrWhitespaceOnly(endPoint)){
             throw new IllegalArgumentException("sls endPoint cannot be null");
-        }
-
-        if (StringUtils.isNullOrWhitespaceOnly(metricColumn)){
-            throw new IllegalArgumentException("metric column cannot be null");
-        }
-
-        if (StringUtils.isNullOrWhitespaceOnly(valueColumn)){
-            throw new IllegalArgumentException("metric column cannot be null");
         }
 
         if(maxRetryTimeStr == null){
@@ -122,12 +111,9 @@ public class PrintCustomSink extends CustomSinkBase {
             }
         }
 
-        // initial
-        columnSize = rowTypeInfo.getTotalFields();
-        mcIndex = rowTypeInfo.getFieldIndex(metricColumn);
-        vcIndex = rowTypeInfo.getFieldIndex(valueColumn);
-
         client = logProducerProvider.getClient();
+        tpsMetricName = "sink.outTps.rate";
+//        outTps = MetricUtils.registerOutTps(getRuntimeContext());
 
     }
 
@@ -147,17 +133,9 @@ public class PrintCustomSink extends CustomSinkBase {
 
     @Override
     public void writeAddRecord(Row row) throws IOException {
-        /*
-        add your logic here
-         */
-        String metricName = (String) row.getField(mcIndex);
-        String metricValue = (String) row.getField(vcIndex);
-
-        metricName = "data.xxx" + "." + metricName;
-
-        MetricMessage metricMessage = new MetricMessage(metricName, 1L, Double.valueOf(metricValue), new HashMap<String, String>());
+        MetricMessage metricMessage = new MetricMessage(tpsMetricName, 1L, 1f, new HashMap<String, String>());
         LogItem logItem = new LogItem();
-        logItem.PushBack(metricName, metricMessage.toString());
+        logItem.PushBack(tpsMetricName, metricMessage.toString());
         try {
             logProducerProvider.getClient().send(project, logStore, logItem);
         } catch (InterruptedException | ProducerException e) {
