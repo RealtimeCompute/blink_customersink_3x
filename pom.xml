@@ -40,12 +40,14 @@
         <dependency>
             <groupId>com.alibaba.blink</groupId>
             <artifactId>blink-metrics-sls</artifactId>
+            <version>blink-3.3.0-1-SNAPSHOT</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/blink-metrics-sls-blink-3.3.0-1-SNAPSHOT.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.alibaba.blink</groupId>
             <artifactId>blink-metrics-mq-common</artifactId>
+            <version>blink-3.3.0-1-SNAPSHOT</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/blink-metrics-mq-common-blink-3.3.0-1-SNAPSHOT.jar</systemPath>
         </dependency>
@@ -55,6 +57,13 @@
             <version>2.7.2</version>
             <type>jar</type>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.taobao.monitor</groupId>
+            <artifactId>kmonitor-client</artifactId>
+            <version>1.1.5-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/kmonitor-client-1.1.5.jar</systemPath>
         </dependency>
     </dependencies>
 
