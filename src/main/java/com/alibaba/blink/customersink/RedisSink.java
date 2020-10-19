@@ -57,14 +57,15 @@ public class RedisSink extends CustomSinkBase {
     }
 
     public void writeAddRecord(Row row) throws IOException {
-        String key = row.getField(0).toString();
-        String value = row.getField(1).toString();
-        LOG.info("key:"+key+",value:"+value);
+        //String key = row.getField(0).toString();
+        //String value = row.getField(1).toString();
+        //LOG.info("key:"+key+",value:"+value);
         try{
             cache.add(row);
             if (cache.size() >= batchsize) {
                 for(int i = 0; i < cache.size(); i ++) {
-                    jedis.set(key, value);
+                    Row cachedRow = cache.get(i);
+                    jedis.set(cachedRow.getField(0).toString(), cachedRow.getField(1).toString());
                 }
                 cache.clear();
             }
