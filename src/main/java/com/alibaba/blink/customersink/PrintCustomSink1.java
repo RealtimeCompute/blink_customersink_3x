@@ -36,7 +36,7 @@ public class PrintCustomSink1 extends CustomSinkBase {
     }
 
     public void close() throws IOException {
-        KMonitorFactory.stop();
+
     }
 
     public void writeAddRecord(Row row) throws IOException {
